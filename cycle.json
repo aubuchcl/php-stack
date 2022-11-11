@@ -1,0 +1,132 @@
+{
+  "version": "1.0",
+  "containers": {
+    "phpui": {
+      "name": "phpui",
+      "image": {
+        "name": "phpui",
+        "origin": {
+          "type": "docker-hub",
+          "details": {
+            "target": "phpmyadmin:latest",
+            "username": null,
+            "token": null
+          }
+        }
+      },
+      "annotations": {
+        "revision": "1",
+        "responsible": "q_bot",
+        "purpose": "test"
+      },
+      "stateful": false,
+      "config": {
+        "network": {
+          "public": "enable",
+          "hostname": "ui",
+          "ports": ["80:80", "443:80"]
+        },
+        "deploy": {
+          "instances": 1,
+          "constraints": {
+            "node": {
+              "tags": {
+                "any": ["aws"]
+              }
+            },
+            "containers": ["warehouse"]
+          }
+        },
+        "runtime": {
+          "environment_vars": {
+            "PMA_ARBITRARY": "1",
+            "PMA_HOST": "warehouse",
+            "PMA_PASSWORD": "admin",
+            "PMA_PORT": "3306",
+            "PMA_USER": "admin"
+          },
+          "privileged": false,
+          "rlimits": {
+            "RLIMIT_NOFILE": {
+              "hard": 1048576,
+              "soft": 65000
+            }
+          },
+          "integrations": {
+            "lets_encrypt": {
+              "enable": true,
+              "certificate_path": "/var/run/cycle/tls/current.cert",
+              "key_path": "/var/run/cycle/tls/current.key",
+              "chain_path": "/var/run/cycle/tls/current.chain",
+              "bundle_path": "/var/run/cycle/tls/current.bundle"
+            }
+          }
+        },
+        "volumes:": {},
+        "deprecate": false
+      }
+    },
+    "warehouse": {
+      "name": "warehouse",
+      "image": {
+        "name": "warehouse",
+        "origin": {
+          "type": "docker-hub",
+          "details": {
+            "target": "mysql:latest",
+            "username": null,
+            "token": null
+          }
+        }
+      },
+      "annotations": {
+        "revision": "1",
+        "responsible": "db_bot",
+        "purpose": "data_store"
+      },
+      "stateful": true,
+      "config": {
+        "network": {
+          "public": "disable",
+          "hostname": "warehouse",
+          "ports": []
+        },
+        "deploy": {
+          "instances": 1,
+          "constraints": {
+            "node": {
+              "tags": {
+                "any": ["aws"]
+              }
+            },
+            "containers": []
+          }
+        },
+        "runtime": {
+          "environment_vars": {
+            "MYSQL_DATABASE": "my_database",
+            "MYSQL_PASSWORD": "admin",
+            "MYSQL_ROOT_PASSWORD": "root_admin",
+            "MYSQL_USER": "admin"
+          },
+          "privileged": false,
+          "rlimits": {
+            "RLIMIT_NOFILE": {
+              "hard": 1048576,
+              "soft": 65000
+            }
+          },
+          "integrations": {}
+        }
+      },
+      "volumes": {
+        "read_only": false,
+        "local": {
+          "max_size": "2G",
+          "storage_pool": true
+        },
+        "destination": "/var/lib/mysql"
+      }
+    }
+  }
+}
